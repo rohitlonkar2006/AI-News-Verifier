@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fake News Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="shortcut icon" href="/static/images/favicon.png" type="image/x-icon">
+</head>
+
+<body>
+    <div id="toastContainer"></div>
+
+    <div id="loadingOverlay" class="hidden">
+        <div class="loading-box">
+            <div class="ai-loader"></div>
+            <h2>AI Processing</h2>
+            <p id="loadingStatus">Initializing model assets...</p>
+            <div class="loading-progress">
+                <div id="loadingBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="background-blur blur-1"></div>
+    <div class="background-blur blur-2"></div>
+
+    <main class="container">
+        <header class="app-header">
+            <div class="badge-premium">Deep Learning System v2.0</div>
+            <h1>AI Fake News <span>Detector</span></h1>
+            <p>Advanced Neural Core • Contextual Attention Engine • Generative Fact-Checking Analytics</p>
+        </header>
+        <div class="mode-switch">
+            <button id="urlTab" class="active">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                    </path>
+                </svg>
+                URL Analyzer
+            </button>
+            <button id="manualTab">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+                Manual Text Entry
+            </button>
+        </div>
+
+        <div class="input-panel-wrapper">
+            <section id="urlPanel" class="panel active">
+                <div class="input-group">
+                    <input id="urlInput" type="text"
+                        placeholder="Paste full article link (e.g., https://news-website.com/article)">
+                    <button id="analyzeBtn" class="btn-primary">Analyze Article</button>
+                </div>
+            </section>
+
+            <section id="manualPanel" class="panel">
+                <div class="form-group">
+                    <input id="titleInput" type="text" placeholder="News Headline">
+                    <textarea id="articleInput" placeholder="Paste full content body here..."></textarea>
+                    <div class="panel-footer-metrics">
+                        <span id="characterCount">0 Characters</span>
+                    </div>
+                    <button id="manualBtn" class="btn-primary">Verify News</button>
+                </div>
+            </section>
+        </div>
+
+        <section id="skeleton" class="hidden">
+            <div class="skeleton-card profile"></div>
+            <div class="skeleton-grid">
+                <div class="skeleton-card split"></div>
+                <div class="skeleton-card split"></div>
+            </div>
+            <div class="skeleton-card tall"></div>
+        </section>
+
+        <section id="result" class="hidden">
+            <div class="dashboard-header-card">
+                <div class="heading-meta">Target Article Verification Output</div>
+                <h2 id="newsTitle"></h2>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="card prediction-card">
+                    <div class="gauge-wrapper">
+                        <svg class="gauge" width="220" height="220">
+                            <circle class="gauge-bg" cx="110" cy="110" r="92" />
+                            <circle id="gaugeProgress" class="gauge-progress" cx="110" cy="110" r="92" />
+                        </svg>
+                        <div class="gauge-text">
+                            <span class="meta-label">CONFIDENCE</span>
+                            <h1 id="gaugeValue">0%</h1>
+                            <span id="predictionBadge">REAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card probability-card">
+                    <h3>Classification Probabilities</h3>
+                    <div class="probability-track-wrapper">
+                        <div class="metric-meta">
+                            <span>Real Probability Distribution</span>
+                            <strong id="realPercent" class="text-success">0%</strong>
+                        </div>
+                        <div class="progress-track">
+                            <div id="realBar" class="bar-success"></div>
+                        </div>
+                    </div>
+                    <div class="probability-track-wrapper">
+                        <div class="metric-meta">
+                            <span>Fake Probability Distribution</span>
+                            <strong id="fakePercent" class="text-danger">0%</strong>
+                        </div>
+                        <div class="progress-track">
+                            <div id="fakeBar" class="bar-danger"></div>
+                        </div>
+                    </div>
+                    <div class="model-meta-pill">Tuned Model Decision Boundary Threshold: <strong
+                            id="threshold">0.53</strong></div>
+                </div>
+            </div>
+
+            <div class="card analysis-card">
+                <div class="card-title-icon">
+                    <h3>AI Executive Summary</h3>
+                </div>
+                <p id="summary" class="summary-body"></p>
+            </div>
+
+            <div class="card analysis-card">
+                <h3>Key Linguistic Indicators</h3>
+                <ul id="reasons" class="reasons-checked-list"></ul>
+            </div>
+
+            <div class="lime-grid">
+                <div class="card chip-card-wrapper positive-wrapper">
+                    <div class="chip-header">
+                        <h4>Credibility Indicators</h4>
+                        <span class="pill-count-meta">Pushes toward Real</span>
+                    </div>
+                    <div id="positiveWords" class="chips"></div>
+                </div>
+                <div class="card chip-card-wrapper negative-wrapper">
+                    <div class="chip-header">
+                        <h4>Deception Indicators</h4>
+                        <span class="pill-count-meta">Pushes toward Fake</span>
+                    </div>
+                    <div id="negativeWords" class="chips"></div>
+                </div>
+            </div>
+
+            <div class="card clean-article-card">
+                <div class="article-header">
+                    <div class="title-meta">
+                        <h3>Linguistic Feature Highlights</h3>
+                        <p>Highlighted areas represent phrases that highly influenced the validation outcome.</p>
+                    </div>
+                    <button id="copyBtn" class="btn-secondary">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
+                            </path>
+                        </svg>
+                        Copy Clean Plaintext
+                    </button>
+                </div>
+                <div id="article" class="article-content-body"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>
