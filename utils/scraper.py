@@ -1,4 +1,3 @@
-import json
 import requests
 
 from urllib.parse import urlparse
@@ -7,6 +6,7 @@ from utils.config import (
     APYHUB_API_KEY,
     gemini
 )
+from utils.json_utils import safe_json_loads
 
 def is_valid_url(url):
 
@@ -111,17 +111,10 @@ def clean_article(raw_text):
 
     output = response.text.strip()
 
-    if output.startswith("```"):
-
-        output = output.replace(
-            "```json",
-            ""
-        ).replace(
-            "```",
-            ""
-        ).strip()
-
-    article = json.loads(output)
+    article = safe_json_loads(
+        output,
+        default={"title": "", "article": ""}
+    )
 
     return (
 

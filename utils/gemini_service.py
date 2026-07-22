@@ -1,5 +1,6 @@
 import json
 from utils.config import gemini
+from utils.json_utils import safe_json_loads
 
 def generate_explanation(title, article, prediction, confidence):
     prompt = f"""
@@ -40,7 +41,18 @@ def generate_explanation(title, article, prediction, confidence):
             prompt,
             generation_config={"response_mime_type": "application/json"}
         )
-        return json.loads(response.text.strip())
+        return safe_json_loads(
+            response.text.strip(),
+            default={
+                "summary": "Linguistic analytics description generation suspended.",
+                "reasons": [
+                    "Gemini explanation generator encountered an unexpected execution timeout."
+                ],
+                "supporting_words": [],
+                "opposing_words": [],
+                "highlight_phrases": []
+            }
+        )
 
     except Exception as e:
         print(f"Gemini processing error: {str(e)}")
